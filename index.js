@@ -11,9 +11,13 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors({
-    origin:"https://frontend-chatbot-blush.vercel.app",
-    credentials: true,
+  origin: "https://frontend-chatbot-blush.vercel.app",
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
 }));
+
+app.options('*', cors());
 
 app.use(express.json());
 const connectDB = async () => {
