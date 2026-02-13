@@ -12,9 +12,7 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors({
   origin: "https://frontend-chatbot-blush.vercel.app",
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true
+  credentials: true,
 }));
 
 app.options('*', cors());
