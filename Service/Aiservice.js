@@ -1,17 +1,19 @@
 import dotenv from 'dotenv';
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { ChatOpenAI } from "@langchain/openai";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { Message } from '../models/model.js';
 dotenv.config();
 
 class AIService {
     constructor() {
-        this.model = new ChatGoogleGenerativeAI({
-            apiKey: process.env.GOOGLE_API_KEY,
-            modelName: "models/gemini-1.5-flash",
-            temperature: 0.7,
-            maxOutputTokens: 1024,
-        });
+        this.model = new ChatOpenAI({
+    model: "openai/gpt-3.5-turbo",
+    temperature: 0.7,
+    maxTokens: 1024,
+    configuration: {
+        baseURL: "https://openrouter.ai/api/v1",
+    },
+});
 
     
         this.systemPrompt = `You are a helpful and empathetic AI customer support assistant for an e-commerce company. Your role is to:
@@ -49,19 +51,11 @@ Assistant:`;
             const role = msg.role === 'user' ? 'Customer' : 'Assistant';
             return `${role}: ${msg.text}`;
         }).join('\n');
-
-       /* const prompt = this.promptTemplate.format({
-            history: history || "No previous conversation.",
-            input: userMessage
-        });
-
-        const response = await this.model.invoke(prompt);*/
         const promptString = await this.promptTemplate.format({
       history: history || "No previous conversation.",
       input: userMessage
     });
 
-    // ✅ Gemini expects STRING, not array
     const response = await this.model.invoke(promptString);
 
 
