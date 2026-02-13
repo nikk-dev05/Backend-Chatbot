@@ -11,7 +11,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5500',
+    origin: process.env.FRONTEND_URL || "https://frontend-chatbot-blush.vercel.app",
     credentials: true,
 }));
 
