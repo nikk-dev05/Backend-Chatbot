@@ -1,17 +1,17 @@
 import express from 'express';
 import cors from 'cors';
-import { createExpressMiddleware } from '@trpc/server/adapters/express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import { appRouter } from './Service/routes.js';
+import router from './Service/routes.js';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+
 app.use(cors({
-  origin: "https://frontend-chatbot-blush.vercel.app",
+  origin: process.env.FRONTEND_URL || "https://frontend-chatbot-blush.vercel.app",
   credentials: true,
 }));
 
@@ -22,43 +22,14 @@ const connectDB = async () => {
         await mongoose.connect(process.env.MONGO_URI);
         console.log('MongoDB connected successfully');
     } catch (error) {
-        console.error(' MongoDB connection error:', error);
+        console.error('MongoDB connection error:', error);
         process.exit(1);
     }
 };
 
-const createContext = async ({ req, res }) => {
-    let user = null;
-    
-    try {
-        const authHeader = req.headers['authorization'];
-        const token = authHeader && authHeader.split(' ')[1];
-        
-        if (token) {
-            const jwt = await import('jsonwebtoken');
-            const { User } = await import('./models/model.js');
-            
-            const decoded = jwt.default.verify(token, process.env.JWT_SECRET);
-            user = await User.findById(decoded.userId).select('-password');
-        }
-    } 
-    catch (error) {
-    }
 
-    return {
-        req,
-        res,
-        user,
-    };
-};
+app.use('/api', router);
 
-app.use(
-    '/api/trpc',
-    createExpressMiddleware({
-        router: appRouter,
-        createContext,
-    })
-);
 
 app.get('/health', (req, res) => {
     res.json({ 
@@ -68,6 +39,7 @@ app.get('/health', (req, res) => {
     });
 });
 
+
 app.get('/', (req, res) => {
     res.json({
         name: 'AI Customer Support Backend',
@@ -75,7 +47,7 @@ app.get('/', (req, res) => {
         status: 'running',
         endpoints: {
             health: '/health',
-            trpc: '/api/trpc',
+            api: '/api',
         }
     });
 });
@@ -89,12 +61,11 @@ app.use((err, req, res, next) => {
     });
 });
 
+
 const startServer = async () => {
     try {
-    
         await connectDB();
 
-    
         app.listen(PORT, () => {
             console.log('');
             console.log('═══════════════════════════════════════════════════════');
@@ -103,8 +74,8 @@ const startServer = async () => {
             console.log(`📡 Server running on: http://localhost:${PORT}`);
             console.log(`🔧 Environment: ${process.env.NODE_ENV || 'development'}`);
             console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL}`);
-            console.log(`📊 tRPC endpoint: http://localhost:${PORT}/api/trpc`);
             console.log(`💚 Health check: http://localhost:${PORT}/health`);
+            console.log(`📊 API base route: http://localhost:${PORT}/api`);
             console.log('═══════════════════════════════════════════════════════');
             console.log('');
         });
@@ -114,6 +85,7 @@ const startServer = async () => {
         process.exit(1);
     }
 };
+
 process.on('unhandledRejection', (err) => {
     console.error('Unhandled Promise Rejection:', err);
     process.exit(1);
