@@ -1,28 +1,12 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import { User, Conversation, Message } from '../models/model.js';
-import { generateToken } from '../Middlewares/authmiddlewares.js';
+import { generateToken,authenticateToken } from '../Middlewares/authmiddlewares.js';
 import { aiService } from './Aiservice.js';
 import { emailService } from './Emailservice.js';
 
 const router = express.Router();
 
-
-const isAuthed = async (req, res, next) => {
-    try {
-        const token = req.headers.authorization?.split(' ')[1];
-        if (!token) return res.status(401).json({ success: false, message: 'Unauthorized' });
-
-        const userId = await generateToken.verifyToken(token);
-        const user = await User.findById(userId);
-        if (!user) return res.status(401).json({ success: false, message: 'Unauthorized' });
-
-        req.user = user;
-        next();
-    } catch (error) {
-        res.status(401).json({ success: false, message: 'Unauthorized' });
-    }
-};
 
 router.post('/auth/register', async (req, res) => {
     try {
@@ -71,7 +55,7 @@ router.post('/auth/forgot-password', async (req, res) => {
     }
 });
 
-router.post('/conversation/create', isAuthed, async (req, res) => {
+router.post('/conversation/create', authenticateToken, async (req, res) => {
     try {
         const conversation = await Conversation.create({ userId: req.user._id, title: 'New Conversation', preview: '' });
         res.json({ success: true, data: { conversationId: conversation._id, timestamp: conversation.createdAt } });
@@ -80,7 +64,7 @@ router.post('/conversation/create', isAuthed, async (req, res) => {
     }
 });
 
-router.get('/conversation/list', isAuthed, async (req, res) => {
+router.get('/conversation/list', authenticateToken, async (req, res) => {
     try {
         const conversations = await Conversation.find({ userId: req.user._id }).sort({ updatedAt: -1 }).limit(50);
         res.json({
@@ -99,7 +83,7 @@ router.get('/conversation/list', isAuthed, async (req, res) => {
     }
 });
 
-router.delete('/conversation/delete', isAuthed, async (req, res) => {
+router.delete('/conversation/delete', authenticateToken, async (req, res) => {
     try {
         const { conversationId } = req.body;
         const conversation = await Conversation.findOne({ _id: conversationId, userId: req.user._id });
@@ -114,7 +98,7 @@ router.delete('/conversation/delete', isAuthed, async (req, res) => {
     }
 });
 
-router.post('/message/send', isAuthed, async (req, res) => {
+router.post('/message/send', authenticateToken, async (req, res) => {
     try {
         const { conversationId, message } = req.body;
         const conversation = await Conversation.findOne({ _id: conversationId, userId: req.user._id });
@@ -140,7 +124,7 @@ router.post('/message/send', isAuthed, async (req, res) => {
     }
 });
 
-router.get('/message/list', isAuthed, async (req, res) => {
+router.get('/message/list', authenticateToken, async (req, res) => {
     try {
         const { conversationId } = req.query;
         const conversation = await Conversation.findOne({ _id: conversationId, userId: req.user._id });
@@ -156,7 +140,7 @@ router.get('/message/list', isAuthed, async (req, res) => {
     }
 });
 
-router.post('/support/escalate', isAuthed, async (req, res) => {
+router.post('/support/escalate',authenticateToken, async (req, res) => {
     try {
         const { conversationId, email, notes } = req.body;
         const conversation = await Conversation.findOne({ _id: conversationId, userId: req.user._id });
