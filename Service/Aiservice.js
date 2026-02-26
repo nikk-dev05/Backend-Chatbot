@@ -10,6 +10,7 @@ class AIService {
     model: "openai/gpt-3.5-turbo",
     temperature: 0.7,
     maxTokens: 1024,
+    openAIApiKey: process.env.OPENAI_API_KEY, 
     configuration: {
         baseURL: "https://openrouter.ai/api/v1",
     },
